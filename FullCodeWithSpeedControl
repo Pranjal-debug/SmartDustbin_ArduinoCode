@@ -1,0 +1,220 @@
+#include <Servo.h>
+
+Servo lidServo;
+
+// -------- IR Sensors --------
+#define LEFT_IR 2
+#define RIGHT_IR 3
+
+// -------- L298N --------
+#define IN1 4
+#define IN2 5
+
+#define SERVO_PIN 6
+
+#define FTRIG 7
+#define FECHO 8
+
+#define HTRIG 9
+#define HECHO 10
+
+#define IN3 11
+#define IN4 12
+
+// -------- Settings --------
+bool binFull = false;
+
+// Speed Control
+int motorOnTime = 25;   // Increase = Faster
+int motorOffTime = 10;  // Increase = Slower
+
+// ---------------- Distance Function ----------------
+float getDistance(int trigPin, int echoPin)
+{
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH, 30000);
+
+  if(duration == 0)
+    return 999;
+
+  return duration * 0.034 / 2.0;
+}
+
+// ---------------- Motor Functions ----------------
+void stopMotors()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+void moveForward()
+{
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  delay(motorOnTime);
+
+  stopMotors();
+
+  delay(motorOffTime);
+}
+
+void turnLeft()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  delay(motorOnTime);
+
+  stopMotors();
+
+  delay(motorOffTime);
+}
+
+void turnRight()
+{
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+
+  delay(motorOnTime);
+
+  stopMotors();
+
+  delay(motorOffTime);
+}
+
+// ---------------- Setup ----------------
+void setup()
+{
+  Serial.begin(9600);
+
+  pinMode(LEFT_IR, INPUT);
+  pinMode(RIGHT_IR, INPUT);
+
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  pinMode(FTRIG, OUTPUT);
+  pinMode(FECHO, INPUT);
+
+  pinMode(HTRIG, OUTPUT);
+  pinMode(HECHO, INPUT);
+
+  lidServo.attach(SERVO_PIN);
+
+  // Lid Closed
+  lidServo.write(0);
+
+  stopMotors();
+
+  delay(1000);
+}
+
+// ---------------- Main Loop ----------------
+void loop()
+{
+  float fillDistance = getDistance(FTRIG, FECHO);
+
+  // FULL
+  if(fillDistance <= 7)
+  {
+    binFull = true;
+  }
+
+  // EMPTY AGAIN
+  else if(fillDistance >= 18)
+  {
+    binFull = false;
+  }
+
+  // -------- NORMAL MODE --------
+  if(!binFull)
+  {
+    stopMotors();
+
+    float handDistance = getDistance(HTRIG, HECHO);
+
+    Serial.print("Hand: ");
+    Serial.print(handDistance);
+
+    Serial.print("  Fill: ");
+    Serial.println(fillDistance);
+
+    if(handDistance > 0 && handDistance < 15)
+    {
+      Serial.println("OPENING LID");
+
+      // Open Lid
+      lidServo.write(90);
+
+      delay(3000);
+
+      // Close Lid
+      lidServo.write(0);
+
+      delay(500);
+    }
+  }
+
+  // -------- FULL MODE --------
+  else
+  {
+    lidServo.write(0);
+
+    int left = digitalRead(LEFT_IR);
+    int right = digitalRead(RIGHT_IR);
+
+    Serial.print("FULL MODE | L=");
+    Serial.print(left);
+    Serial.print(" R=");
+    Serial.println(right);
+
+    // Forward
+    if(left == 0 && right == 0)
+    {
+      moveForward();
+    }
+
+    // Left sensor on line
+    else if(left == 1 && right == 0)
+    {
+      turnLeft();
+    }
+
+    // Right sensor on line
+    else if(left == 0 && right == 1)
+    {
+      turnRight();
+    }
+
+    // Destination / Stop Point
+    else if(left == 1 && right == 1)
+    {
+      stopMotors();
+    }
+  }
+
+  delay(50);
+}
