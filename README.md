@@ -200,11 +200,27 @@ FULL MODE | L=0 R=0
 
 ## Authors
 
-Developed as an Arduino-based Smart Autonomous Trash Bin project combining:
+This project was developed as a group project focusing on smart waste management and autonomous robotics.
 
-* Touchless waste disposal
-* Fill-level monitoring
-* Autonomous navigation
-* Basic robotics and automation
+**Team Member:**
 
-This project demonstrates concepts from embedded systems, robotics, sensors, motor control, and smart waste management.
+* Aditya Narayan Shome
+* Arijit Ghosh
+* Ayush Prasad Sonar
+* Deepak Ojha
+* MD Chand Islam
+* MD Khalid Mahmood
+* Navpreet Kaur
+* Shakshi Kotwala
+* Pranjal Gupta (author)
+
+The project combines concepts from:
+
+* Embedded Systems
+* Arduino Programming
+* Robotics
+* Sensor Integration
+* Motor Control
+* Automation
+
+Special thanks to all team members for their contributions to the design, development, testing, and implementation of the Smart Autonomous Trash Bin system.
